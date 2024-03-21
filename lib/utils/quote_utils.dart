@@ -357,3 +357,10 @@ List<Map<String, dynamic>> allQuoteData = [
 //Modals  =  Objects
 List<Quote> allQuotes =
     allQuoteData.map((e) => Quote.fromMap(data: e)).toList();
+
+List<String> allCategories = allQuotes
+    .map(
+      (e) => e.category,
+    )
+    .toSet()
+    .toList();
