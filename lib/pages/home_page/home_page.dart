@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:quotes_app/headers.dart';
 import 'package:quotes_app/modals/quote_modal.dart';
+import 'package:quotes_app/pages/home_page/components/category_list.dart';
+import 'package:quotes_app/pages/home_page/components/quotes_grid_view.dart';
+import 'package:quotes_app/pages/home_page/components/quotes_list_view.dart';
 import 'package:quotes_app/utils/quote_utils.dart';
 
 class HomePage extends StatefulWidget {
@@ -49,51 +52,27 @@ class _HomePageState extends State<HomePage> {
         showRandomQuote();
       },
     );
-
     super.initState();
   }
+
+  bool _isList = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBar(),
+      appBar: appBar(
+        isList: _isList,
+        toggleList: () {
+          _isList = !_isList;
+          setState(() {});
+        },
+      ),
       body: Column(
         children: [
           //Categories
-          Expanded(
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: allCategories
-                  .map(
-                    (e) => Container(
-                      margin: const EdgeInsets.all(5),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        border: Border.all(),
-                      ),
-                      child: Text(e),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          Expanded(
-            flex: 12,
-            child: ListView.separated(
-              itemCount: allQuotes.length,
-              itemBuilder: (context, index) => ExpansionTile(
-                title: Text(allQuotes[index].quote),
-                children: [
-                  Text("Author: ${allQuotes[index].author}"),
-                  Text("Category: ${allQuotes[index].category}"),
-                ],
-              ),
-              separatorBuilder: (context, index) => const Divider(
-                indent: 16,
-                endIndent: 16,
-              ),
-            ),
-          ),
+          categoryList(),
+          //Quotes
+          _isList ? quotesListView() : quotesGridView(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
