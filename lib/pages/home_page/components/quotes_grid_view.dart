@@ -1,3 +1,4 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:quotes_app/headers.dart';
 
 Widget quotesGridView() {
@@ -26,8 +27,14 @@ Widget quotesGridView() {
                 children: [
                   Text(
                     allQuotes[index].quote,
-                    maxLines: 8,
+                    maxLines: 6,
                     overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.aladin().merge(
+                      const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                   Text("- ${allQuotes[index].author}"),
                 ],
