@@ -1,6 +1,16 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:quotes_app/headers.dart';
 import 'package:quotes_app/modals/quote_modal.dart';
 import 'package:quotes_app/utils/fonts_enum.dart';
+import 'dart:ui' as ui;
+
+import 'package:share_extend/share_extend.dart';
 
 class DetailPage extends StatefulWidget {
   const DetailPage({super.key});
@@ -13,6 +23,26 @@ class _DetailPageState extends State<DetailPage> {
   Color color = Colors.white;
   double opacity = 1;
   String fonts = AppFonts.dancingScript.name;
+
+  GlobalKey widgetKey = GlobalKey();
+
+  Future<File> getFileFromWidget() async {
+    RenderRepaintBoundary boundary =
+        widgetKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    ui.Image image = await boundary.toImage(
+      pixelRatio: 15,
+    );
+    ByteData? data = await image.toByteData();
+    Uint8List list = data!.buffer.asUint8List();
+
+    Directory directory = await getTemporaryDirectory();
+    File file = await File(
+            "${directory.path}/QA${DateTime.now().millisecondsSinceEpoch}.png")
+        .create();
+    file.writeAsBytesSync(list);
+
+    return file;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,34 +97,38 @@ class _DetailPageState extends State<DetailPage> {
         body: Column(
           children: [
             Expanded(
-              child: Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                  color: color.withOpacity(opacity),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      quote.quote,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontFamily: fonts,
+              //Widget identify =>  pixels/boundary =>  Image  =>  Uint8List  =>  File
+              child: RepaintBoundary(
+                key: widgetKey,
+                child: Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(),
+                    color: color.withOpacity(opacity),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SelectableText(
+                        quote.quote,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontFamily: fonts,
+                        ),
                       ),
-                    ),
-                    Text("- ${quote.author}"),
-                  ],
+                      Text("- ${quote.author}"),
+                    ],
+                  ),
                 ),
               ),
             ),
             Expanded(
               //Column
-              child: ListView(
+              child: Column(
                 children: [
-                  Text("Background color"),
+                  const Text("Background color"),
                   //Row
                   SizedBox(
                     height: 50,
@@ -149,6 +183,49 @@ class _DetailPageState extends State<DetailPage> {
                           ),
                         )
                         .toList(),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: "${quote.quote}\n\n-${quote.author}",
+                        ),
+                      ).then((value) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Quote copied to clipboard !!"),
+                          ),
+                        );
+                      });
+                    },
+                    icon: const Icon(Icons.copy),
+                    label: const Text("Copy to clipboard"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      ImageGallerySaver.saveFile(
+                        (await getFileFromWidget()).path,
+                        isReturnPathOfIOS: true,
+                      ).then(
+                        (value) => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Saved to gallery !!"),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.save_alt),
+                    label: const Text("Save to gallery"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      ShareExtend.share(
+                        (await getFileFromWidget()).path,
+                        "image",
+                      );
+                    },
+                    icon: const Icon(Icons.share),
+                    label: const Text("Share"),
                   ),
                 ],
               ),
